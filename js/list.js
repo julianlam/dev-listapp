@@ -18,12 +18,18 @@ var ItemList = {
 						_model.set({
 							done: newState
 						});
-					} else {
-						alert('!!');
 					}
 				}
 			}).post({
 				action: 'toggle',
+				itemID: this.get('itemID')
+			});
+		},
+		remove: function() {
+			new Request({
+				url: 'ajax/items.php'
+			}).post({
+				action: 'set_deleted',
 				itemID: this.get('itemID')
 			});
 		}
@@ -31,17 +37,20 @@ var ItemList = {
 	itemEl: Backbone.View.extend({
 		tagName: 'li',
 		initialize: function() {
-			this.model.bind('change', this.render, this);
+			this.model.on('change', this.render, this);
 			this.el.set('html',
-				'<button type="button"><img src="./images/edit.gif" /></button>' +
+				'<button data-action="edit" type="button"><img src="./images/edit.gif" /></button>' +
+				'<button data-action="set_deleted" type="button"><img src="./images/delete.png" /></button>' +
 				'<span>' + this.model.get('label') + '</span>'
 			);
 		},
 		events: {
-			'touchend button': 'changeName',
-			'click button': 'changeName',
-			'touchend': 'toggle',
-			'click': 'toggle',
+			'touchend button[data-action="edit"]': 'changeName',
+			'click button[data-action="edit"]': 'changeName',
+			'click button[data-action="set_deleted"]': 'set_deleted',
+			'touchend button[data-action="set_deleted"]': 'set_deleted',
+			'touchend': 'show_details',
+			'mousedown': 'show_details'
 		},
 		render: function() {
 			if (this.model.get('done') && !this.el.hasClass('done')) this.el.addClass('done');
@@ -51,7 +60,7 @@ var ItemList = {
 
 			return this;
 		},
-		changeName: function(e) {
+		changeName: function() {
 			if (!this.clickCatch) {
 				var	newName = prompt("Please enter the new name for this item", this.model.get('label')),
 					_item = this;
@@ -59,7 +68,7 @@ var ItemList = {
 				this.clickCatch = true;
 				setTimeout(function() { _item.clickCatch = false }, 500);
 
-				if (newName !== this.model.get('label') && newName.length > 0) {
+				if (newName && newName !== this.model.get('label') && newName.length > 0) {
 					new Request({
 						url: 'ajax/items.php',
 						onSuccess: function(data) {
@@ -85,16 +94,38 @@ var ItemList = {
 					this.model.toggle();
 				}
 			}
+		},
+		set_deleted: function() {
+			if (!this.clickCatch) {
+				var _item = this;
+				this.clickCatch = true;
+				setTimeout(function() { _item.clickCatch = false }, 500);
+
+				var confirm = window.confirm('Are you sure you wish to delete this item?');
+				if (confirm) {
+					this.model.remove();
+					this.remove();
+				}
+			}
+		},
+		show_details: function(e) {
+			if (e.target.nodeName != 'BUTTON' && e.target.nodeName != 'IMG') {
+				var detailsView = appInstance.itemDetailsView;
+				detailsView.model = this.model;
+				detailsView.render();
+			}
 		}
 	}),
 	listApp: Backbone.View.extend({
-		tagName: 'body',
 		initialize: function() {
+			var _app = this;
 			this.list = this.el.getElement('#itemList');
 			this.getList();
+			this.itemDetailsView = new ItemList.itemDetailsView;
 		},
 		events: {
-			'touchend [data-action="new"]': 'create'
+			'touchend [data-action="new"]': 'create',
+			'click [data-action="new"]': 'create'
 		},
 		addToView: function(attr) {
 			var item = new ItemList.item(attr);
@@ -123,21 +154,98 @@ var ItemList = {
 				action: 'get_items'
 			});
 		},
-		create: function() {
-			var _app = this;
+		create: function(e) {
+			if (!this.clickCatch) {
+				var _app = this;
+				this.clickCatch = true;
+				setTimeout(function() { delete _app.clickCatch }, 500);
 
-			new Request.JSON({
-				url: 'ajax/items.php',
-				onSuccess: function(data) {
-					if (data.status) {
-						_app.addToView({
-							itemID: data.itemID
-						});
+				new Request.JSON({
+					url: 'ajax/items.php',
+					onSuccess: function(data) {
+						if (data.status) {
+							_app.addToView({
+								itemID: data.itemID
+							});
+						}
 					}
-				}
-			}).post({
-				action: 'new_item'
-			});
+				}).post({
+					action: 'new_item'
+				});
+			}
 		}
-	})
+	}),
+	itemDetailsView: Backbone.View.extend({
+		template: _.template(
+			'<div class="container">' +
+				'<div class="closeBtn"></div>' +
+				'<h2><%= label %></h2>' +
+				'<p><%= label %></p>' +
+			'</div>'
+		),
+		className: 'itemDetails',
+		initialize: function() {
+			
+		},
+		events: {
+			'click .closeBtn': 'hide'
+		},
+		render: function() {
+			var	_view = this,
+				browserDim = ItemList.getViewportDimensions()
+				overlayEl = document.body.getElement('.modal-overlay');
+			this.el.set('html', this.template({ label: this.model.get('label') }));
+
+			this.el.inject(document.body);
+
+			// Positioning
+			//var modalDim = this.el.getDimensions();
+			this.el.setStyles({
+				left: browserDim[0] * 0.05,
+				top: browserDim[1] * 0.05
+			});
+			overlayEl.setStyle('display', 'block');
+			setTimeout(function() {
+				overlayEl.addEvent('click', function() {
+					_view.hide();
+				});
+				window.addEvent('keydown', function(e) {
+					if (e.key === 'esc') {
+						_view.hide();
+					}
+				});
+			}, 500);
+
+			return this;
+		},
+		hide: function() {
+			this.remove();
+			document.body.getElement('.modal-overlay').setStyle('display', 'none').removeEvents();
+			window.removeEvents('keydown');
+		}
+	}),
+	getViewportDimensions: function() {
+		var browserWidth, browserHeight;
+
+		if (window.innerWidth && window.innerHeight) {	// The REAL browsers
+			browserWidth = window.innerWidth;
+			browserHeight = window.innerHeight;
+		}
+		else if (document.compatMode=='CSS1Compat' &&	// IE Standard
+			document.documentElement &&
+			document.documentElement.offsetWidth ) {
+			browserWidth = document.documentElement.offsetWidth;
+			browserHeight = document.documentElement.offsetHeight;
+		}
+		else if (document.body && document.body.offsetWidth) {	// IE Quirks
+			browserWidth = document.body.offsetWidth;
+			browserHeight = document.body.offsetHeight;
+		}
+		else {
+			browserWidth = 1280;
+			browserHeight = 1024;
+		}
+
+		return [browserWidth, browserHeight];
+	}
 }

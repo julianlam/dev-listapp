@@ -1,3 +1,9 @@
+<?php
+	// Initiate WURFL and detect for mobile browser
+	require './lib/wurfl/wurfl_config.php';
+	$requestingDevice = $wurflManager->getDeviceForUserAgent($_SERVER['HTTP_USER_AGENT']);
+	$site = $requestingDevice->getCapability('is_wireless_device') == 'true' ? 'mobile' : 'desktop';
+?>
 <html>
 	<head>
 		<script language="javascript" src="js/mootools.js" type="text/javascript"></script>
@@ -10,7 +16,8 @@
 		<meta name="HandheldFriendly" content="true" />
 		<meta name="viewport" content="width=300,minimum-scale=1.0,maximum-scale=1.0" />
 	</head>
-	<body>
+	<body data-site="<?=$site?>">
+		<div class="modal-overlay"></div>
 		<div class="options">
 			<button data-action="new">New Item</button>
 		</div>
@@ -18,7 +25,10 @@
 		<ul id="itemList"></ul>
 		<script>
 			window.addEvent('domready', function() {
-				var listApp = new ItemList.listApp({ el: document.body });
+				// Decide whether to use clicks or touchends
+				var siteType = document.body.getProperty('data-site');
+
+				window.appInstance = new ItemList.listApp({ el: document.body });
 			});
 		</script>
 	</body>

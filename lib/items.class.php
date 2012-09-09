@@ -42,5 +42,18 @@
 				return false;
 			}
 		}
+
+		public function setDeleted($itemID) {
+			$db = new dbx();
+			$delete = $db->run("UPDATE items SET deleted=1 WHERE itemID=:itemID", array(
+				"itemID" => $itemID
+			));
+
+			if ($delete->rowCount() > 0) {
+				return true;
+			} else {
+				return false;
+			}
+		}
 	}
 ?>

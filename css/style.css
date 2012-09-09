@@ -6,6 +6,20 @@ body {
 	background: #222;
 }
 
+.modal-overlay {
+	display: none;
+	height: 100%;
+	width: 100%;
+	position: absolute;
+	top: 0;
+	left: 0;
+	opacity: 0.75;
+	-moz-opacity: 0.75;
+	opacity: 0.75;
+	-ms-filter:"progid:DXImageTransform.Microsoft.Alpha"(Opacity=75);
+	background: #000;
+}
+
 #itemList {
 	margin: 0;
 	padding: 0;
@@ -40,7 +54,9 @@ body {
 	}
 
 	#itemList li.done span {
-		text-decoration: line-through;
+		-moz-opacity: 0.25;
+		opacity: 0.25;
+		-ms-filter:"progid:DXImageTransform.Microsoft.Alpha"(Opacity=25);
 	}
 
 .options {
@@ -66,3 +82,37 @@ body {
 		height: 48px;
 		float: right;
 	}
+
+.itemDetails {
+	position: absolute;
+	width: 90%;
+	max-height: 80%;
+	overflow-y: auto;
+	overflow-x: hidden;
+}
+
+	.itemDetails .container {
+		padding: 12px;
+		background: #f0f0f0;
+		border: 1px solid #666;
+	}
+
+		.itemDetails .container h2 {
+			margin: 6px;
+		}
+
+		.itemDetails .container p {
+		}
+
+.closeBtn {
+	float: right;
+	background: url('../images/cancel_inactive.png') no-repeat 12px 12px;
+	min-width: 33px;
+	height: 33px;
+}
+
+.closeBtn:hover {
+	background: url('../images/cancel_active.png') no-repeat 12px 12px;
+	cursor: pointer;
+	*cursor: hand;
+}

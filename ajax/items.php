@@ -20,6 +20,11 @@
 			$items = new Items();
 			echo $items->changeLabel($_POST['itemID'], $_POST['label']) ? 'true' : 'false';
 		break;
+		case 'set_deleted':
+			$items = new Items();
+			echo $items->setDeleted($_POST['itemID']) ? 'true' : 'false';
+		break;
+
 		default:
 			echo json_encode(array(
 				"status" => 0,
