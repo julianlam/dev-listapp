@@ -1,4 +1,4 @@
-<html manifest="cache.manifest">
+<html>
 	<head>
 		<script language="javascript" src="js/mootools.js" type="text/javascript"></script>
 		<!--<script language="javascript" src="js/mootools-more.js" type="text/javascript"></script>-->
