@@ -120,6 +120,10 @@ var ItemList = {
 		initialize: function() {
 			var _app = this;
 			this.list = this.el.getElement('#itemList');
+
+			this.lsItems = JSON.decode(localStorage.getItem('items'));
+			if (typeOf(this.lsItems) !== 'array') this.lsItems = [];
+
 			this.getList();
 			this.itemDetailsView = new ItemList.itemDetailsView;
 		},
@@ -137,22 +141,38 @@ var ItemList = {
 		getList: function() {
 			var _app = this;
 
-			new Request.JSON({
-				url: 'ajax/items.php',
-				onSuccess: function(data) {
-					if (data.length) {
-						data.each(function(item) {
-							var model = _app.addToView({
-								itemID: item.itemID,
-								label: item.text,
-								done: item.done == 1 ? true : false
+			if (navigator.onLine) {
+				new Request.JSON({
+					url: 'ajax/items.php',
+					onSuccess: function(data) {
+						if (data.length) {
+							_app.lsItems.length = 0;
+							data.each(function(item) {
+								var model = _app.addToView({
+									itemID: item.itemID,
+									label: item.text,
+									done: item.done == 1 ? true : false
+								});
+
+								// Add to localStorage
+								_app.lsItems.push(model.attributes);
+								localStorage.setItem('items', JSON.encode(_app.lsItems));
 							});
-						});
+						}
 					}
-				}
-			}).get({
-				action: 'get_items'
-			});
+				}).get({
+					action: 'get_items'
+				});
+			} else {
+				// Use localStorage, if present
+				this.lsItems.each(function(item) {
+					_app.addToView({
+						itemID: item.itemID,
+						label: item.label,
+						done: item.done
+					});
+				});
+			}
 		},
 		create: function(e) {
 			if (!this.clickCatch) {

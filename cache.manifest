@@ -1,0 +1,26 @@
+CACHE MANIFEST
+# Sep 09 2012:v33
+
+
+CACHE:
+
+index.php
+
+css/cssloader.php
+css/style.css
+css/reset.css
+
+js/backbone.js
+js/list.js
+js/mootools.js
+js/MooToolsAdapter.js
+js/underscore.js
+
+images/cancel_active.png
+images/cancel_inactive.png
+images/delete.png
+images/edit.gif
+
+
+NETWORK:
+ajax/items.php?action=get_items
