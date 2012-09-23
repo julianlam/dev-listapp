@@ -1,5 +1,6 @@
 var ItemList = {
 	item: Backbone.Model.extend({
+		idAttribute: "guid",
 		defaults: {
 			label: 'New Item',
 			done: false
@@ -17,6 +18,10 @@ var ItemList = {
 				if (this.get('done') === '1') this.set('done', true);
 				else this.set('done', false);
 			}
+
+			this.on('change', this.updateStore);
+
+			this.url = './items/' + this.get('guid');
 		},
 		toggle: function() {
 			var	_model = this,
@@ -36,24 +41,21 @@ var ItemList = {
 				itemID: this.get('itemID')
 			});
 		},
-		remove: function() {
-			new Request({
-				url: 'ajax/items.php'
-			}).post({
-				action: 'set_deleted',
-				itemID: this.get('itemID')
-			});
-		},
 		generateGUID: function() {
 			return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
 				var r = Math.random()*16|0, v = c == 'x' ? r : (r&0x3|0x8);
 				return v.toString(16);
 			});
+		},
+		updateStore: function() {
+			this.collection.updateStore();
 		}
 	}),
 	list: Backbone.Collection.extend({
 		initialize: function() {
 			this.on('reset', this.render);
+			this.on('remove', this.updateStore);
+			this.on('add', this.updateStore);
 		},
 		render: function() {
 			localStorage.setItem('items', JSON.encode(this.toJSON()));
@@ -61,6 +63,9 @@ var ItemList = {
 				var view = new ItemList.itemEl({ model: item });
 				view.render().el.inject(document.body.getElement('#itemList'));
 			});
+		},
+		updateStore: function() {
+			localStorage.setItem('items', JSON.encode(this.toJSON()));
 		}
 	}),
 	itemEl: Backbone.View.extend({
@@ -107,7 +112,7 @@ var ItemList = {
 						}
 					}).post({
 						action: 'edit_label',
-						itemID: _item.model.get('itemID'),
+						guid: _item.model.get('guid'),
 						label: newName
 					});
 				}
@@ -132,8 +137,14 @@ var ItemList = {
 
 				var confirm = window.confirm('Are you sure you wish to delete this item?');
 				if (confirm) {
-					this.model.remove();
-					this.remove();
+					this.model.destroy({
+						success: function() {
+							_item.el.destroy();
+						},
+						error: function() {
+							// ...
+						}
+					});
 				}
 			}
 		},
@@ -150,7 +161,6 @@ var ItemList = {
 			var _app = this;
 			this.list = this.el.getElement('#itemList');
 
-			//this.getList();
 			this.itemDetailsView = new ItemList.itemDetailsView;
 
 			// Collection of list items
@@ -161,7 +171,7 @@ var ItemList = {
 				this.listCollection.reset(JSON.decode(localStorage.getItem('items')));
 			} else {
 				console.log('xhr');
-				this.listCollection.url = './ajax/items.php?action=get_items';
+				this.listCollection.url = './items/';
 				this.listCollection.fetch();
 			}
 		},
@@ -177,56 +187,7 @@ var ItemList = {
 			view.render().el.inject(this.list, 'bottom');
 			this.listCollection.add(item);
 
-			// Add to localStorage
-			localStorage.setItem('items', this.listCollection.toJSON());
-
 			return item;
-		},
-		getList: function() {
-			var _app = this;
-
-			if (navigator.onLine) {
-				/*if (this.lsItems.length > 0) {
-					// Use localStorage
-					this.lsItems.each(function(item) {
-						_app.addToView({
-							guid: item.guid,
-							label: item.label,
-							lastEdited: item.lastEdited,
-							done: item.done
-						});
-					});
-				} else {*/
-					new Request.JSON({
-						url: 'ajax/items.php',
-						onSuccess: function(data) {
-							if (data.length) {
-								_app.lsItems.length = 0;
-								data.each(function(item) {
-									var model = _app.addToView({
-										guid: item.guid,
-										label: item.text,
-										lastEdited: item.lastEdited,
-										done: item.done == 1 ? true : false
-									});
-								});
-							}
-						}
-					}).get({
-						action: 'get_items'
-					});
-				//}
-			} else {
-				// Use localStorage, if present
-				this.lsItems.each(function(item) {
-					_app.addToView({
-						guid: item.guid,
-						label: item.label,
-						lastEdited: item.lastEdited,
-						done: item.done
-					});
-				});
-			}
 		},
 		create: function(e) {
 			if (!this.clickCatch) {
@@ -240,8 +201,8 @@ var ItemList = {
 					url: 'ajax/items.php',
 					onSuccess: function(data) {
 						if (data.status) {
-							
-						}
+							alert(1);
+						} else alert(2);
 					}
 				}).post({
 					action: 'new_item',

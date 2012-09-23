@@ -1,5 +1,11 @@
 <?php
 	class Items {
+		public function get($guid) {
+			$db = new dbx();
+			return $db->run("SELECT * FROM items WHERE guid=:guid", array("guid" => $guid))->fetch();
+		}
+
+		// TODO: Update this to use guids
 		public function toggle($itemID) {
 			$db = new dbx();
 			$toggle = $db->run("UPDATE items SET done=done XOR 1 WHERE itemID=:itemID", array(
@@ -10,30 +16,23 @@
 			else return false;
 		}
 
-		public function create() {
+		public function create($guid) {
 			$db = new dbx();
-			$item = $db->run("INSERT INTO items (text, datetime) VALUES ('New Item', :time)", array(
+			$item = $db->run("INSERT INTO items (guid, label, lastEdited) VALUES (:guid, 'New Item', :time)", array(
+				"guid" => $guid,
 				"time" => time()
 			));
-			$itemID = $db->last();
 
-			if ($itemID > 0) {
-				return array(
-					"status" => 1,
-					"itemID" => $itemID
-				);
-			} else {
-				return array(
-					"status" => 0
-				);
-			}
+			$status = $item->errorInfo();
+			if ($status[0] == '00000') return array("status" => 1);
+			else return array("status" => 0);
 		}
 
-		public function changeLabel($itemID, $new_text) {
+		public function changeLabel($guid, $new_text) {
 			$db = new dbx();
-			$update = $db->run("UPDATE items SET text=:text WHERE itemID=:itemID", array(
-				"itemID" => $itemID,
-				"text" => $new_text
+			$update = $db->run("UPDATE items SET label=:label WHERE guid=:guid", array(
+				"guid" => $guid,
+				"label" => $new_text
 			));
 
 			if ($update->rowCount() > 0) {
@@ -43,10 +42,10 @@
 			}
 		}
 
-		public function setDeleted($itemID) {
+		public function delete($guid) {
 			$db = new dbx();
-			$delete = $db->run("UPDATE items SET deleted=1 WHERE itemID=:itemID", array(
-				"itemID" => $itemID
+			$delete = $db->run("UPDATE items SET deleted=1 WHERE guid=:guid", array(
+				"guid" => $guid
 			));
 
 			if ($delete->rowCount() > 0) {
