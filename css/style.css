@@ -101,8 +101,19 @@ body {
 			margin: 6px;
 		}
 
-		.itemDetails .container p {
+		.itemDetails .container table {
+			width: 100%;
 		}
+
+			.itemDetails .container table td {
+				padding: 12px 24px;
+				cursor: pointer;
+				*cursor: hand;
+			}
+
+			.itemDetails .container table input {
+				float: right;
+			}
 
 .closeBtn {
 	float: right;
@@ -116,3 +127,13 @@ body {
 	cursor: pointer;
 	*cursor: hand;
 }
+
+table.zebra {}
+
+	table.zebra tr:nth-child(even) {
+		background: #e0e0e0;
+	}
+
+	table.zebra tr:nth-child(odd) {
+		background: #fafafa;
+	}

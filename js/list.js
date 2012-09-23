@@ -49,6 +49,25 @@ var ItemList = {
 		},
 		updateStore: function() {
 			this.collection.updateStore();
+		},
+		changeLabel: function() {
+			var	newName = prompt("Please enter the new name for this item", this.get('label')),
+			_item = this;
+
+			if (newName && newName !== this.get('label') && newName.length > 0) {
+				new Request({
+					url: 'ajax/items.php',
+					onSuccess: function(data) {
+						if (data == 'true') {
+							_item.set('label', newName);
+						}
+					}
+				}).post({
+					action: 'edit_label',
+					guid: _item.get('guid'),
+					label: newName
+				});
+			}
 		}
 	}),
 	list: Backbone.Collection.extend({
@@ -96,26 +115,10 @@ var ItemList = {
 		},
 		changeName: function() {
 			if (!this.clickCatch) {
-				var	newName = prompt("Please enter the new name for this item", this.model.get('label')),
-					_item = this;
-
 				this.clickCatch = true;
 				setTimeout(function() { _item.clickCatch = false }, 500);
 
-				if (newName && newName !== this.model.get('label') && newName.length > 0) {
-					new Request({
-						url: 'ajax/items.php',
-						onSuccess: function(data) {
-							if (data == 'true') {
-								_item.model.set('label', newName);
-							}
-						}
-					}).post({
-						action: 'edit_label',
-						guid: _item.model.get('guid'),
-						label: newName
-					});
-				}
+				this.model.changeLabel();
 			}
 		},
 		toggle: function(e) {
@@ -201,8 +204,8 @@ var ItemList = {
 					url: 'ajax/items.php',
 					onSuccess: function(data) {
 						if (data.status) {
-							alert(1);
-						} else alert(2);
+							// ...
+						}
 					}
 				}).post({
 					action: 'new_item',
@@ -216,15 +219,33 @@ var ItemList = {
 			'<div class="container">' +
 				'<div class="closeBtn"></div>' +
 				'<h2><%= label %></h2>' +
-				'<p><%= label %></p>' +
+				'<table class="zebra">' +
+					'<tbody>' +
+						'<tr>' +
+							'<td data-action="edit">' +
+								'Edit Label' +
+							'</td>' +
+						'</tr>' +
+						'<tr>' +
+							'<td>' +
+								'<input type="checkbox" />' +
+								'Done' +
+							'</td>' +
+						'</tr>' +
+					'</tbody>' +
+				'</table>' +
 			'</div>'
 		),
 		className: 'itemDetails',
 		initialize: function() {
-			
+
 		},
 		events: {
-			'click .closeBtn': 'hide'
+			'click .closeBtn': 'hide',
+			'click td[data-action="edit"]': 'changeLabel'
+		},
+		refresh: function() {
+			this.el.set('html', this.template({ label: this.model.get('label') }));
 		},
 		render: function() {
 			var	_view = this,
@@ -252,12 +273,18 @@ var ItemList = {
 				});
 			}, 500);
 
+			this.model.on('change', this.refresh, this);
+
 			return this;
 		},
 		hide: function() {
 			this.remove();
 			document.body.getElement('.modal-overlay').setStyle('display', 'none').removeEvents();
 			window.removeEvents('keydown');
+			this.model.off('change', this.refresh);
+		},
+		changeLabel: function() {
+			this.model.changeLabel();
 		}
 	}),
 	getViewportDimensions: function() {
