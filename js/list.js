@@ -102,11 +102,8 @@ var ItemList = {
 			);
 		},
 		events: {
-			// 'touchend button[data-action="edit"]': 'changeName',
 			'click button[data-action="edit"]': 'changeName',
 			'click button[data-action="set_deleted"]': 'set_deleted',
-			// 'touchend button[data-action="set_deleted"]': 'set_deleted',
-			// 'touchend': 'show_details',
 			'mousedown': 'show_details'
 		},
 		render: function() {
@@ -165,7 +162,6 @@ var ItemList = {
 			}
 		},
 		events: {
-			// 'touchend [data-action="new"]': 'create',
 			'click [data-action="new"]': 'create'
 		},
 		addToView: function(attr) {
