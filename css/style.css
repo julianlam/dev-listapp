@@ -111,6 +111,11 @@ body {
 				*cursor: hand;
 			}
 
+			.itemDetails .container table img {
+				vertical-align: top;
+				padding-right: 12px;
+			}
+
 			.itemDetails .container table input {
 				float: right;
 			}

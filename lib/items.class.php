@@ -5,11 +5,10 @@
 			return $db->run("SELECT * FROM items WHERE guid=:guid", array("guid" => $guid))->fetch();
 		}
 
-		// TODO: Update this to use guids
-		public function toggle($itemID) {
+		public function toggle($guid) {
 			$db = new dbx();
-			$toggle = $db->run("UPDATE items SET done=done XOR 1 WHERE itemID=:itemID", array(
-				"itemID" => $itemID
+			$toggle = $db->run("UPDATE items SET done=done XOR 1 WHERE guid=:guid", array(
+				"guid" => $guid
 			));
 
 			if ($toggle->rowCount() > 0) return true;

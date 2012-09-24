@@ -7,7 +7,7 @@
 		switch($_REQUEST['action']) {
 			case 'toggle':
 				$items = new Items();
-				echo $items->toggle($_POST['itemID']) ? 'true' : 'false';
+				echo $items->toggle($_POST['guid']) ? 'true' : 'false';
 			break;
 			case 'new_item':
 				$items = new Items();

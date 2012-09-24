@@ -27,18 +27,22 @@ var ItemList = {
 			var	_model = this,
 				newState = this.get('done') ^ 1;
 
+			_model.set({
+				done: newState
+			});
+
 			new Request({
 				url: 'ajax/items.php',
 				onSuccess: function(data) {
-					if (data == 'true') {
+					if (data != 'true') {
 						_model.set({
-							done: newState
+							done: newState ^ 1
 						});
 					}
 				}
 			}).post({
 				action: 'toggle',
-				itemID: this.get('itemID')
+				guid: this.get('guid')
 			});
 		},
 		generateGUID: function() {
@@ -98,11 +102,11 @@ var ItemList = {
 			);
 		},
 		events: {
-			'touchend button[data-action="edit"]': 'changeName',
+			// 'touchend button[data-action="edit"]': 'changeName',
 			'click button[data-action="edit"]': 'changeName',
 			'click button[data-action="set_deleted"]': 'set_deleted',
-			'touchend button[data-action="set_deleted"]': 'set_deleted',
-			'touchend': 'show_details',
+			// 'touchend button[data-action="set_deleted"]': 'set_deleted',
+			// 'touchend': 'show_details',
 			'mousedown': 'show_details'
 		},
 		render: function() {
@@ -113,44 +117,24 @@ var ItemList = {
 
 			return this;
 		},
-		changeName: function() {
-			if (!this.clickCatch) {
-				this.clickCatch = true;
-				setTimeout(function() { _item.clickCatch = false }, 500);
-
+		changeName: _.throttle(function() {
 				this.model.changeLabel();
-			}
-		},
-		toggle: function(e) {
-			if (!this.clickCatch) {
-				var _item = this;
-				this.clickCatch = true;
-				setTimeout(function() { _item.clickCatch = false }, 500);
+		}, 500),
+		set_deleted: _.throttle(function() {
+			var _item = this,
+				confirm = window.confirm('Are you sure you wish to delete this item?');
 
-				if (e.target.nodeName != 'BUTTON' && e.target.nodeName != 'IMG') {
-					this.model.toggle();
-				}
+			if (confirm) {
+				this.model.destroy({
+					success: function() {
+						_item.el.destroy();
+					},
+					error: function() {
+						// ...
+					}
+				});
 			}
-		},
-		set_deleted: function() {
-			if (!this.clickCatch) {
-				var _item = this;
-				this.clickCatch = true;
-				setTimeout(function() { _item.clickCatch = false }, 500);
-
-				var confirm = window.confirm('Are you sure you wish to delete this item?');
-				if (confirm) {
-					this.model.destroy({
-						success: function() {
-							_item.el.destroy();
-						},
-						error: function() {
-							// ...
-						}
-					});
-				}
-			}
-		},
+		}, 500),
 		show_details: function(e) {
 			if (e.target.nodeName != 'BUTTON' && e.target.nodeName != 'IMG') {
 				var detailsView = appInstance.itemDetailsView;
@@ -169,6 +153,8 @@ var ItemList = {
 			// Collection of list items
 			this.listCollection = new ItemList.list();
 			this.listCollection.model = ItemList.item;
+			this.listCollection.url = './items/';
+
 			if (localStorage.getItem('items')) {
 				console.log('localStorage');
 				this.listCollection.reset(JSON.decode(localStorage.getItem('items')));
@@ -179,7 +165,7 @@ var ItemList = {
 			}
 		},
 		events: {
-			'touchend [data-action="new"]': 'create',
+			// 'touchend [data-action="new"]': 'create',
 			'click [data-action="new"]': 'create'
 		},
 		addToView: function(attr) {
@@ -223,13 +209,18 @@ var ItemList = {
 					'<tbody>' +
 						'<tr>' +
 							'<td data-action="edit">' +
-								'Edit Label' +
+								'<img src="./images/edit.gif" /> Edit Label' +
 							'</td>' +
 						'</tr>' +
 						'<tr>' +
-							'<td>' +
+							'<td data-field="done">' +
 								'<input type="checkbox" />' +
-								'Done' +
+								'<img src="./images/check.png" /> Mark as Done' +
+							'</td>' +
+						'</tr>' +
+						'<tr>' +
+							'<td data-action="close">' +
+								'<img src="./images/undo.png" /> Close' +
 							'</td>' +
 						'</tr>' +
 					'</tbody>' +
@@ -242,16 +233,21 @@ var ItemList = {
 		},
 		events: {
 			'click .closeBtn': 'hide',
-			'click td[data-action="edit"]': 'changeLabel'
+			'click td[data-action="edit"]': 'changeLabel',
+			'click td[data-field="done"]': 'toggle',
+			'click td[data-action="close"]': 'hide'
 		},
 		refresh: function() {
 			this.el.set('html', this.template({ label: this.model.get('label') }));
+			this.el.getElement('[data-field="done"] input').set('checked', this.model.get('done'));
 		},
 		render: function() {
 			var	_view = this,
 				browserDim = ItemList.getViewportDimensions()
 				overlayEl = document.body.getElement('.modal-overlay');
+
 			this.el.set('html', this.template({ label: this.model.get('label') }));
+			this.el.getElement('[data-field="done"] input').set('checked', this.model.get('done'));
 
 			this.el.inject(document.body);
 
@@ -285,6 +281,9 @@ var ItemList = {
 		},
 		changeLabel: function() {
 			this.model.changeLabel();
+		},
+		toggle: function() {
+			this.model.toggle();
 		}
 	}),
 	getViewportDimensions: function() {
