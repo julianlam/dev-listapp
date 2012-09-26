@@ -81,6 +81,8 @@ body {
 		color: white;
 		height: 48px;
 		float: right;
+		cursor: pointer;
+		*cursor: hand;
 	}
 
 .itemDetails {

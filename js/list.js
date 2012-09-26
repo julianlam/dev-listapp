@@ -76,15 +76,22 @@ var ItemList = {
 	}),
 	list: Backbone.Collection.extend({
 		initialize: function() {
+			this.url = './items/';
 			this.on('reset', this.render);
 			this.on('remove', this.updateStore);
 			this.on('add', this.updateStore);
+			this.element = document.body.getElement('#itemList');
 		},
 		render: function() {
+			var _self = this;
+
+			// Clear the existing list
+			this.element.empty();
+
 			localStorage.setItem('items', JSON.encode(this.toJSON()));
 			this.models.each(function(item) {
 				var view = new ItemList.itemEl({ model: item });
-				view.render().el.inject(document.body.getElement('#itemList'));
+				view.render().el.inject(_self.element);
 			});
 		},
 		updateStore: function() {
@@ -157,12 +164,12 @@ var ItemList = {
 				this.listCollection.reset(JSON.decode(localStorage.getItem('items')));
 			} else {
 				console.log('xhr');
-				this.listCollection.url = './items/';
 				this.listCollection.fetch();
 			}
 		},
 		events: {
-			'click [data-action="new"]': 'create'
+			'click [data-action="new"]': 'create',
+			'click [data-action="fetch"]': 'sync'
 		},
 		addToView: function(attr) {
 			var	item = new ItemList.item(attr),
@@ -194,6 +201,9 @@ var ItemList = {
 					guid: newItem.get('guid')
 				});
 			}
+		},
+		sync: function() {
+			this.listCollection.fetch();
 		}
 	}),
 	itemDetailsView: Backbone.View.extend({

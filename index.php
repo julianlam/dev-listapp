@@ -15,6 +15,7 @@
 		<div class="modal-overlay"></div>
 		<div class="options">
 			<button data-action="new">New Item</button>
+			<button data-action="fetch">Refresh</button>
 		</div>
 		<div class="clear"></div>
 		<ul id="itemList"></ul>
